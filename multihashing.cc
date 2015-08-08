@@ -23,6 +23,7 @@ extern "C" {
     #include "sha1.h"
     #include "x15.h"
     #include "fresh.h"
+    #include "neoscrypt.h"
     #include "c11.h"
 }
 
@@ -575,6 +576,28 @@ Handle<Value> fresh(const Arguments& args) {
     return scope.Close(buff->handle_);
 }
 
+Handle<Value> neoscrypt_hash(const Arguments& args) {
+    HandleScope scope;
+
+    if (args.Length() < 2)
+        return except("You must provide two arguments.");
+
+    Local<Object> target = args[0]->ToObject();
+
+    if(!Buffer::HasInstance(target))
+        return except("Argument should be a buffer object.");
+
+    char * input = Buffer::Data(target);
+    char output[32];
+
+    uint32_t input_len = Buffer::Length(target);
+
+    neoscrypt(input, output, 0);
+
+    Buffer* buff = Buffer::New(output, 32);
+    return scope.Close(buff->handle_);
+}
+
 Handle<Value> c11(const Arguments& args) {
     HandleScope scope;
 
@@ -620,6 +643,7 @@ void init(Handle<Object> exports) {
     exports->Set(String::NewSymbol("sha1"), FunctionTemplate::New(sha1)->GetFunction());
     exports->Set(String::NewSymbol("x15"), FunctionTemplate::New(x15)->GetFunction());
     exports->Set(String::NewSymbol("fresh"), FunctionTemplate::New(fresh)->GetFunction());
+    exports->Set(String::NewSymbol("neoscrypt"), FunctionTemplate::New(neoscrypt_hash)->GetFunction());
     exports->Set(String::NewSymbol("c11"), FunctionTemplate::New(c11)->GetFunction());
 }
 
